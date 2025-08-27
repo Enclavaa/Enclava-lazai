@@ -78,7 +78,7 @@ contracts/
 - **Backend**: Rust with Actix-web framework
 - **Database**: PostgreSQL with SQLx
 - **AI/ML**: Google Gemini integration via Rig framework
-- **Blockchain**: Solidity smart contracts on Sei Network
+- **Blockchain**: Solidity smart contracts on Duckchain Network
 - **Development**: Foundry for smart contract development
 - **API Documentation**: OpenAPI/Swagger with utoipa
 - **File Processing**: CSV parsing and multipart uploads
@@ -267,8 +267,8 @@ RUST_LOG=info ./target/release/enclava_backend
 ```bash
 cd contracts
 
-# Deploy to Sei testnet with verification
-./deploy_testnet.sh
+# Deploy to Duckchain with verification
+./deploy.sh
 ```
 
 ## 🔧 Configuration

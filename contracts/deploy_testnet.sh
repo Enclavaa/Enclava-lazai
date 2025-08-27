@@ -1,15 +1,10 @@
 #!/bin/bash
 
-echo "Deploying EnclavaPayments to testnet..."
+echo "Deploying EnclavaPayments to Duckchain..."
 
 forge script script/DeployEnclavaPayments.s.sol:DeployEnclavaPayments \
-  --rpc-url sei_testnet \
+  --rpc-url duckchain_mainnet \
   --broadcast \
-  --verify \
-  --verifier blockscout \
-  --verifier-url https://seitrace.com/atlantic-2/api \
-  --compiler-version 0.8.30 \
-  --chain-id 1328
 
 
-echo -e "\n\nDeployed EnclavaPayments to testnet!"
+echo -e "\n\nDeployed EnclavaPayments to Duckchain!"
