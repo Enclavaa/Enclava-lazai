@@ -63,7 +63,7 @@ const relatedDatasets: RelatedDataset[] = [
 const DatasetDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { address, chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { switchChain, isSuccess: isChainSwitched } = useSwitchChain();
 
   const [dataset, setDataset] = useState<MarketplaceDataset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,6 +140,17 @@ const DatasetDetails: React.FC = () => {
     }
   }, [signMessageData]);
 
+  useEffect(() => {
+    if (isChainSwitched) {
+      console.log("Chain switched successfully");
+    }
+
+    // Sign a message
+    const messageToSign = "Sign to mint your agent DAT on LAZAI testnet";
+
+    signMessage({ message: messageToSign });
+  }, [isChainSwitched]);
+
   async function handleAddFileToDatRegistry() {
     // Add file upload transaction logic
     const datConfig = ContractConfig.testnet();
@@ -208,10 +219,6 @@ const DatasetDetails: React.FC = () => {
 
     signMessage({ message: messageToSign });
 
-    toast.success("LAZAI DAT minted successfully.", {
-      position: "top-right",
-      autoClose: 3000,
-    });
     setIsMintingDat(false);
   };
 
