@@ -14,6 +14,7 @@ import {
   MarketplaceDataset,
   ApiError,
 } from "../services/api";
+import { useAccount } from "wagmi";
 
 interface RelatedDataset {
   id: string;
@@ -46,12 +47,16 @@ const relatedDatasets: RelatedDataset[] = [
 
 const DatasetDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { address } = useAccount();
+
   const [dataset, setDataset] = useState<MarketplaceDataset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
   const [isLaunchingEnclave, setIsLaunchingEnclave] = useState(false);
+  const [isDatasetOwner, setIsDatasetOwner] = useState(false);
+  const [isMintingDat, setIsMintingDat] = useState(false);
 
   // Fetch dataset details
   useEffect(() => {
@@ -68,6 +73,9 @@ const DatasetDetails: React.FC = () => {
       try {
         const datasetData = await getDatasetDetails(Number(id));
         setDataset(datasetData);
+        if (datasetData && address) {
+          setIsDatasetOwner(datasetData.owner_address === address);
+        }
       } catch (error) {
         if (error instanceof ApiError) {
           setError(error.message);
@@ -108,6 +116,17 @@ const DatasetDetails: React.FC = () => {
     setTimeout(() => {
       setIsLaunchingEnclave(false);
       toast.info("Enclave launch functionality will be implemented soon.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }, 2000);
+  };
+
+  const handleMintLazaiDat = () => {
+    setIsMintingDat(true);
+    setTimeout(() => {
+      setIsMintingDat(false);
+      toast.info("Mint LAZAI DAT functionality will be implemented soon.", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -296,7 +315,24 @@ const DatasetDetails: React.FC = () => {
                 <div className="font-mono text-sm uppercase">TOTAL PRICE</div>
               </div>
 
-              {isPurchased ? (
+              {isDatasetOwner ? (
+                <button
+                  onClick={handleMintLazaiDat}
+                  disabled={isMintingDat}
+                  className={`w-full border-4 py-4 font-black uppercase text-lg transition-colors ${
+                    isMintingDat
+                      ? "border-gray-300 bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "border-duck-yellow bg-duck-yellow text-black hover:bg-black hover:text-white hover:border-black"
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Shield size={20} />
+                    <span>
+                      {isMintingDat ? "MINTING..." : "MINT YOUR LAZAI DAT"}
+                    </span>
+                  </div>
+                </button>
+              ) : isPurchased ? (
                 <div className="space-y-4">
                   <div className="border-2 border-green-500 bg-green-50 p-4 text-center">
                     <Shield className="mx-auto mb-2 text-green-500" size={24} />
