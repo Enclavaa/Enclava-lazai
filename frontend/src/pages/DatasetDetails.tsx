@@ -14,7 +14,22 @@ import {
   MarketplaceDataset,
   ApiError,
 } from "../services/api";
-import { useAccount } from "wagmi";
+import {
+  useAccount,
+  useClient,
+  useConnectorClient,
+  useSignMessage,
+  useSwitchChain,
+  useWalletClient,
+} from "wagmi";
+import { config, lazaiTestnet } from "../wagmi.config";
+import {
+  DATA_REGISTRY_CONTRACT_ABI,
+  VERIFIED_COMPUTING_CONTRACT_ABI,
+  ContractConfig,
+} from "alith/lazai";
+import { readContract, writeContract } from "viem/actions";
+import { Address } from "viem";
 
 interface RelatedDataset {
   id: string;
@@ -47,7 +62,8 @@ const relatedDatasets: RelatedDataset[] = [
 
 const DatasetDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
 
   const [dataset, setDataset] = useState<MarketplaceDataset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +73,15 @@ const DatasetDetails: React.FC = () => {
   const [isLaunchingEnclave, setIsLaunchingEnclave] = useState(false);
   const [isDatasetOwner, setIsDatasetOwner] = useState(false);
   const [isMintingDat, setIsMintingDat] = useState(false);
+  const [isDAtMinted, setIsDAtMinted] = useState(false);
+  const walletClient = useClient();
+
+  const {
+    data: signMessageData,
+    error: signMessageError,
+    signMessage,
+    variables,
+  } = useSignMessage();
 
   // Fetch dataset details
   useEffect(() => {
@@ -99,6 +124,54 @@ const DatasetDetails: React.FC = () => {
     fetchDataset();
   }, [id]);
 
+  // use effect for signature creation
+  useEffect(() => {
+    if (signMessageData) {
+      console.log("Message signed:", signMessageData);
+      console.log("Signature variables:", variables);
+
+      handleAddFileToDatRegistry();
+
+      toast.success("Message signed successfully. LAZAI DAT minted.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsDAtMinted(true);
+    }
+  }, [signMessageData]);
+
+  async function handleAddFileToDatRegistry() {
+    // Add file upload transaction logic
+    const datConfig = ContractConfig.testnet();
+
+    // const { data: walletClient } = useConnectorClient({ config });
+
+    if (!walletClient) {
+      toast.error("Wallet client not available");
+      return;
+    }
+
+    if (!address) {
+      toast.error("Wallet address not available");
+      return;
+    }
+
+    const hash = await writeContract(walletClient, {
+      address: datConfig.dataRegistryAddress as Address,
+      abi: DATA_REGISTRY_CONTRACT_ABI,
+      functionName: "addFile",
+      args: ["test", "dkjdhd"],
+      account: address as `0x${string}`,
+    });
+
+    console.log("Transaction hash:", hash);
+
+    if (!hash) {
+      toast.error("Failed to add file to DAT registry");
+      return;
+    }
+  }
+
   const handlePurchase = () => {
     setIsPurchasing(true);
     setTimeout(() => {
@@ -124,13 +197,22 @@ const DatasetDetails: React.FC = () => {
 
   const handleMintLazaiDat = () => {
     setIsMintingDat(true);
-    setTimeout(() => {
-      setIsMintingDat(false);
-      toast.info("Mint LAZAI DAT functionality will be implemented soon.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }, 2000);
+
+    // Switch to lazai network if not already on it
+    if (chainId !== lazaiTestnet.id) {
+      switchChain({ chainId: lazaiTestnet.id });
+    }
+
+    // Sign a message
+    const messageToSign = "Sign to mint your agent DAT on LAZAI testnet";
+
+    signMessage({ message: messageToSign });
+
+    toast.success("LAZAI DAT minted successfully.", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    setIsMintingDat(false);
   };
 
   const formatFileSize = (sizeInBytes: number): string => {
@@ -318,7 +400,7 @@ const DatasetDetails: React.FC = () => {
               {isDatasetOwner ? (
                 <button
                   onClick={handleMintLazaiDat}
-                  disabled={isMintingDat}
+                  disabled={isMintingDat || isDAtMinted}
                   className={`w-full border-4 py-4 font-black uppercase text-lg transition-colors ${
                     isMintingDat
                       ? "border-gray-300 bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -328,7 +410,11 @@ const DatasetDetails: React.FC = () => {
                   <div className="flex items-center justify-center space-x-2">
                     <Shield size={20} />
                     <span>
-                      {isMintingDat ? "MINTING..." : "MINT YOUR LAZAI DAT"}
+                      {isMintingDat
+                        ? "MINTING..."
+                        : isDAtMinted
+                        ? "LAZAI DAT MINTED"
+                        : "MINT YOUR LAZAI DAT"}
                     </span>
                   </div>
                 </button>
