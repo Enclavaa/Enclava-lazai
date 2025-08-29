@@ -36,6 +36,33 @@ export const duckchainMainnet = defineChain({
   testnet: false,
 });
 
+// Lazai testnet
+export const lazaiTestnet = defineChain({
+  id: 133718,
+  name: "Lazai Testnet",
+  network: "lazai-testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "LAZAI",
+    symbol: "LAZAI",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://testnet.lazai.network"],
+    },
+    public: {
+      http: ["https://testnet.lazai.network"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Lazai Testnet",
+      url: "https://testnet-explorer.lazai.network/",
+    },
+  },
+  testnet: true,
+});
+
 // wallet connectors
 const connectors = connectorsForWallets(
   [
@@ -57,10 +84,11 @@ const connectors = connectorsForWallets(
 );
 
 export const config = createConfig({
-  chains: [duckchainMainnet],
+  chains: [duckchainMainnet, lazaiTestnet],
   connectors,
   transports: {
     [duckchainMainnet.id]: http(),
+    [lazaiTestnet.id]: http(),
   },
   ssr: false,
 });
